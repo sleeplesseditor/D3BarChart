@@ -52,10 +52,7 @@ d3.json('data/revenues.json').then(function(data){
         .attr("transform", "translate(0, " + height + ")")
         .call(xAxisCall)
         .selectAll("text")
-            .attr("y", "10")
-            .attr("x", "-5")
-            .attr("text-transform", "end")
-            .attr("transform", "rotate(-40)");
+            .attr("y", "17")
 
     // Y-Axis
     var yAxisCall = d3.axisLeft(y)
