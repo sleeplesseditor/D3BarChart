@@ -5,6 +5,9 @@ var width = 600 - margin.left - margin.right,
 
 var flag = true;
 
+// Transition variable
+var t = d3.transition().duration(750);
+
 var g = d3.select("#chart-area")
     .append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -55,7 +58,9 @@ d3.json('data/revenues.json').then(function(data){
     });
 
     d3.interval(function(){
-        update(data)
+        var newData = flag ? data : data.slice(1);
+
+        update(newData)
         flag = !flag;
     }, 1000);
 
@@ -71,39 +76,44 @@ function update(data){
 
     // X-Axis
     var xAxisCall = d3.axisBottom(x)
-        xAxisGroup.call(xAxisCall);
+        xAxisGroup.transition(t).call(xAxisCall);
         // .selectAll("text")
         //     .attr("y", "17")
 
     // Y-Axis
     var yAxisCall = d3.axisLeft(y)
-        .tickFormat(function(d){
-            return "$" + d;
-        });
-        yAxisGroup.call(yAxisCall)
+        .tickFormat(function(d){ return "$" + d });
+        yAxisGroup.transition(t).call(yAxisCall)
 
     // JOIN
     var rects = g.selectAll("rect")
-        .data(data);
+        .data(data, function(d){
+            return d.month;
+        });
     
     // EXIT
-    rects.exit().remove();
-
-    // UPDATE
-    rects
-        .attr("y", function(d){ return y(d[value]) })
-        .attr("x", function(d){ return x(d.month) })
-        .attr("height", function(d){ return height - y(d[value]) })
-        .attr("width", x.bandwidth);
+    rects.exit()
+        .attr("fill", "red")
+    .transition(t)
+        .attr("y", y(0))
+        .attr("height", 0)
+        .remove();
 
     // ENTER
     rects.enter()
         .append("rect")
-            .attr("y", function(d){ return y(d[value]) })
+            .attr("fill", "grey")
+            .attr("y", y(0))
+            .attr("height", 0)
             .attr("x", function(d){ return x(d.month) })
-            .attr("height", function(d){ return height - y(d[value]) })
             .attr("width", x.bandwidth)
-            .attr("fill", "grey");
+            // UPDATE
+            .merge(rects)
+                .transition(t)
+                    .attr("x", function(d){ return x(d.month) })
+                    .attr("width", x.bandwidth)
+                    .attr("y", function(d){ return y(d[value]) })
+                    .attr("height", function(d){ return height - y(d[value]) })
 
     var label = flag ? "Revenue" : "Profit";
     yLabel.text(label);
